@@ -54,7 +54,7 @@ function Clean-CommitText {
     return $cleanedLines
 }
 
-$Branch = "HEAD"
+$Branch = "ikgeo"
 $SinceCommit = "34f534fe"
 
 Set-Location $RepoPath
