@@ -52,8 +52,6 @@ namespace RobotComponents.ABB.Controllers
 
         private ControllersNS.Controller _controller;
         private ControllersNS.UserInfo _userInfo = ControllersNS.UserInfo.DefaultUser;
-        private string _userName = ControllersNS.UserInfo.DefaultUser.Name;
-        private string _password = ControllersNS.UserInfo.DefaultUser.Password;
         private readonly List<string> _logger = new List<string>();
 
         private List<RapidDomainNS.Task> _tasks = new List<RapidDomainNS.Task>();
@@ -188,6 +186,7 @@ namespace RobotComponents.ABB.Controllers
             {
                 _isInitialized = false;
                 Log("Could not initialize the controller instance: There is no ABB controller defined.");
+                return;
             }
 
             #region mechanical units
@@ -318,13 +317,13 @@ namespace RobotComponents.ABB.Controllers
             try
             {
                 _controller.Logon(_userInfo);
-                Log($"Logged in with username {_userName}.");
+                Log($"Logged in with username {_userInfo.Name}.");
                 return true;
             }
 
             catch (Exception e)
             {
-                Log($"Could not logon with username {_userName}: {e.Message}.");
+                Log($"Could not logon with username {_userInfo.Name}: {e.Message}.");
                 return false;
             }
         }
@@ -558,7 +557,7 @@ namespace RobotComponents.ABB.Controllers
 
             for (int i = 0; i < _externalAxes.Count; i++)
             {
-                RapidDomainNS.JointTarget jointTarget = _mechanicalUnits[i].GetPosition();
+                RapidDomainNS.JointTarget jointTarget = _externalAxes[i].GetPosition();
 
                 for (int j = 0; j < _externalAxes[i].NumberOfAxes; j++)
                 {
@@ -824,15 +823,13 @@ namespace RobotComponents.ABB.Controllers
             if (_isEmpty == true)
             {
                 Log("Could not set the user info: The controller is empty.");
+                return;
             }
 
             try
             {
-                _userName = name;
-                _password = password;
-
-                _userInfo = new ControllersNS.UserInfo(_userName, _password);
-                Log($"User info set to {_userName}.");
+                _userInfo = new ControllersNS.UserInfo(name, password);
+                Log($"User info set to {_userInfo.Name}.");
             }
             catch (Exception e)
             {
@@ -848,11 +845,10 @@ namespace RobotComponents.ABB.Controllers
             if (_isEmpty == true)
             {
                 Log("Could not set the default user: The controller is empty.");
+                return;
             }
 
-            _userName = ControllersNS.UserInfo.DefaultUser.Name;
-            _password = ControllersNS.UserInfo.DefaultUser.Password;
-
+            _userInfo = ControllersNS.UserInfo.DefaultUser;
             Log("User info set to DefaultUser.");
         }
 
@@ -1423,9 +1419,9 @@ namespace RobotComponents.ABB.Controllers
             #region load module from directory
             using (ControllersNS.Mastership master = ControllersNS.Mastership.Request(_controller))
             {
-                foreach (string filePathRemote in remotefilePaths)
+                try
                 {
-                    try
+                    foreach (string filePathRemote in remotefilePaths)
                     {
                         // Grant acces
                         _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.LoadRapidProgram);
@@ -1436,14 +1432,17 @@ namespace RobotComponents.ABB.Controllers
                         status = "Loaded a module from the filesystem of the controller to the controller task.";
                         Log(status);
                     }
-                    catch (Exception e)
-                    {
-                        status = $"Could not load the module from the filesystem of the controller to the controller task: {e.Message}.";
-                        Log(status);
-                        return false;
-                    }
                 }
-                master.Release();
+                catch (Exception e)
+                {
+                    status = $"Could not load the module from the filesystem of the controller to the controller task: {e.Message}.";
+                    Log(status);
+                    return false;
+                }
+                finally
+                {
+                    master.Release();
+                }
             }
             #endregion
 
@@ -1953,8 +1952,14 @@ namespace RobotComponents.ABB.Controllers
             {
                 using (ControllersNS.Mastership master = ControllersNS.Mastership.Request(_controller))
                 {
-                    _controller.Rapid.Start(RapidDomainNS.RegainMode.Continue, RapidDomainNS.ExecutionMode.Continuous, RapidDomainNS.ExecutionCycle.Once, RapidDomainNS.StartCheck.CallChain);
-                    master.Release();
+                    try
+                    {
+                        _controller.Rapid.Start(RapidDomainNS.RegainMode.Continue, RapidDomainNS.ExecutionMode.Continuous, RapidDomainNS.ExecutionCycle.Once, RapidDomainNS.StartCheck.CallChain);
+                    }
+                    finally
+                    {
+                        master.Release();
+                    }
                 }
 
                 status = "Program started.";
@@ -1990,8 +1995,14 @@ namespace RobotComponents.ABB.Controllers
             {
                 using (ControllersNS.Mastership master = ControllersNS.Mastership.Request(_controller))
                 {
-                    _controller.Rapid.Stop(RapidDomainNS.StopMode.Instruction);
-                    master.Release();
+                    try
+                    {
+                        _controller.Rapid.Stop(RapidDomainNS.StopMode.Instruction);
+                    }
+                    finally
+                    {
+                        master.Release();
+                    }
                 }
 
                 status = "Program stopped.";
@@ -2104,7 +2115,7 @@ namespace RobotComponents.ABB.Controllers
         /// </summary>
         public string UserName
         {
-            get { return _userName; }
+            get { return _userInfo.Name; }
         }
 
         /// <summary>

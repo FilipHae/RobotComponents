@@ -1,0 +1,42 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [main, ikgeo]
+  pull_request:
+    branches: [main, ikgeo]
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v2
+
+      - name: Restore NuGet packages
+        run: nuget restore
+
+      - name: Build solution
+        run: msbuild /t:Restore,Build /p:Configuration=Release /p:TreatWarningsAsErrors=false
+
+      - name: Setup VSTest
+        uses: Malcolmnixon/Setup-VSTest@v4
+
+      - name: Run tests
+        run: vstest.console.exe "RobotComponents.Tests\bin\Release\net48\RobotComponents.Tests.dll" /Logger:"trx;LogFileName=TestResults.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults.trx'
