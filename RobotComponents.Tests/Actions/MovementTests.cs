@@ -159,6 +159,159 @@ namespace RobotComponents.Tests.Actions
         }
         #endregion
 
+        #region MoveC
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveC_RobotTarget_ProducesCorrectInstruction()
+        {
+            RobotTarget cirPoint = new RobotTarget("via1", new Plane(new Point3d(200, 100, 400), Vector3d.ZAxis));
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveC, target, new SpeedData(100), new ZoneData(10));
+            move.CircularPoint = cirPoint;
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("MoveC ", joined);
+            Assert.Contains("via1", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveC_UnsetCircularPoint_ThrowsException()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveC, target, new SpeedData(100), new ZoneData(10));
+
+            Assert.Throws<Exception>(() => GenerateModule(new List<IAction> { move }));
+        }
+        #endregion
+
+        #region MoveLDO / MoveJDO / MoveCDO
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveL_WithDigitalOutput_ProducesMoveLDO()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            SetDigitalOutput sdo = new SetDigitalOutput("DO_1", true);
+            Movement move = new Movement(MovementType.MoveL, target, new SpeedData(100), new ZoneData(10), sdo);
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("MoveLDO", joined);
+            Assert.Contains("DO_1, 1", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveJ_WithDigitalOutput_ProducesMoveJDO()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            SetDigitalOutput sdo = new SetDigitalOutput("DO_1", false);
+            Movement move = new Movement(MovementType.MoveJ, target, new SpeedData(100), new ZoneData(10), sdo);
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("MoveJDO", joined);
+            Assert.Contains("DO_1", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveAbsJ_WithDigitalOutput_ProducesSeparateSetDO()
+        {
+            RobotJointPosition rjp = new RobotJointPosition(0, 0, 0, 0, 0, 0);
+            JointTarget target = new JointTarget("jt1", rjp);
+            SetDigitalOutput sdo = new SetDigitalOutput("DO_1", true);
+            Movement move = new Movement(MovementType.MoveAbsJ, target, new SpeedData(100), new ZoneData(10), sdo);
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("MoveAbsJ", joined);
+            Assert.Contains("SetDO", joined);
+            Assert.Contains("DO_1", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveC_WithDigitalOutput_ProducesMoveCDO()
+        {
+            RobotTarget cirPoint = new RobotTarget("via1", new Plane(new Point3d(200, 100, 400), Vector3d.ZAxis));
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            SetDigitalOutput sdo = new SetDigitalOutput("DO_1", true);
+            Movement move = new Movement(MovementType.MoveC, target, new SpeedData(100), new ZoneData(10), sdo);
+            move.CircularPoint = cirPoint;
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("MoveCDO", joined);
+            Assert.Contains("via1", joined);
+            Assert.Contains("DO_1, 1", joined);
+        }
+        #endregion
+
+        #region SyncID
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveL_WithSyncID_AppendsBackslashID()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveL, target, new SpeedData(100), new ZoneData(10));
+            move.SyncID = 5;
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("\\ID:=5", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveL_DefaultSyncID_NoBackslashID()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveL, target, new SpeedData(100), new ZoneData(10));
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.DoesNotContain("\\ID", joined);
+        }
+        #endregion
+
+        #region Time
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveL_WithTime_AppendsBackslashT()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveL, target, new SpeedData(100), new ZoneData(10));
+            move.Time = 2.5;
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.Contains("\\T:=2.5", joined);
+        }
+
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveL_DefaultTime_NoBackslashT()
+        {
+            RobotTarget target = new RobotTarget("rt1", new Plane(new Point3d(300, 0, 500), Vector3d.ZAxis));
+            Movement move = new Movement(MovementType.MoveL, target, new SpeedData(100), new ZoneData(10));
+
+            List<string> module = GenerateModule(new List<IAction> { move });
+            string joined = string.Join(Environment.NewLine, module);
+
+            Assert.DoesNotContain("\\T", joined);
+        }
+        #endregion
+
         #region IsValid
         [Fact]
         [Trait("Category", "RequiresRhino")]
