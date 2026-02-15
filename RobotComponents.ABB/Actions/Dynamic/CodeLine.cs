@@ -14,11 +14,13 @@
 
 // System Libs
 using System;
+using System.Collections.Generic;
 using System.Runtime.Serialization;
 using System.Security.Permissions;
 // RobotComponents Libs
 using RobotComponents.ABB.Definitions;
 using RobotComponents.ABB.Enumerations;
+using RobotComponents.ABB.Utils;
 
 namespace RobotComponents.ABB.Actions.Dynamic
 {
@@ -31,6 +33,7 @@ namespace RobotComponents.ABB.Actions.Dynamic
         #region fields
         private string _code;
         private CodeType _type;
+        private List<string> _warnings = new List<string>();
         #endregion
 
         #region (de)serialization
@@ -42,7 +45,10 @@ namespace RobotComponents.ABB.Actions.Dynamic
         protected CodeLine(SerializationInfo info, StreamingContext context)
         {
             // // Version version = (int)info.GetValue("Version", typeof(Version)); // <-- use this if the (de)serialization changes
-            _code = (string)info.GetValue("Code", typeof(string));
+            string code = (string)info.GetValue("Code", typeof(string));
+            RapidCodeLineSanitizer.SanitizeResult result = RapidCodeLineSanitizer.Sanitize(code);
+            _code = result.Code;
+            _warnings = result.Warnings;
             _type = (CodeType)info.GetValue("Code Type", typeof(CodeType));
         }
 
@@ -74,7 +80,9 @@ namespace RobotComponents.ABB.Actions.Dynamic
         /// <param name="code"> The custom RAPID code line. </param>
         public CodeLine(string code)
         {
-            _code = code;
+            RapidCodeLineSanitizer.SanitizeResult result = RapidCodeLineSanitizer.Sanitize(code);
+            _code = result.Code;
+            _warnings = result.Warnings;
             _type = CodeType.Instruction;
         }
 
@@ -85,18 +93,21 @@ namespace RobotComponents.ABB.Actions.Dynamic
         /// <param name="type"> The Code Type. </param>
         public CodeLine(string code, CodeType type)
         {
-            _code = code;
+            RapidCodeLineSanitizer.SanitizeResult result = RapidCodeLineSanitizer.Sanitize(code);
+            _code = result.Code;
+            _warnings = result.Warnings;
             _type = type;
         }
 
         /// <summary>
-        /// Initializes a new instance of the Code Line class by duplicating an existing Code Line instance. 
+        /// Initializes a new instance of the Code Line class by duplicating an existing Code Line instance.
         /// </summary>
         /// <param name="codeLine"> The Code Line instance to duplicate. </param>
         public CodeLine(CodeLine codeLine)
         {
             _code = codeLine.Code;
             _type = codeLine.Type;
+            _warnings = new List<string>(codeLine.Warnings);
         }
 
         /// <summary>
@@ -189,6 +200,11 @@ namespace RobotComponents.ABB.Actions.Dynamic
         /// <param name="RAPIDGenerator"> The RAPID Generator. </param>
         public void ToRAPIDGenerator(RAPIDGenerator RAPIDGenerator)
         {
+            if (_warnings.Count > 0)
+            {
+                return;
+            }
+
             if (_type == CodeType.Declaration)
             {
                 RAPIDGenerator.ProgramDeclarationCustomCodeLines.Add("    " + _code);
@@ -210,6 +226,7 @@ namespace RobotComponents.ABB.Actions.Dynamic
             {
                 if (_code == null) { return false; }
                 if (_code == "") { return false; }
+                if (_warnings.Count > 0) { return false; }
                 return true;
             }
         }
@@ -217,10 +234,26 @@ namespace RobotComponents.ABB.Actions.Dynamic
         /// <summary>
         /// Gets or sets the custom RAPID Code Line text.
         /// </summary>
+        /// <remarks>
+        /// Setting this property re-runs sanitization on the new value.
+        /// </remarks>
         public string Code
         {
             get { return _code; }
-            set { _code = value; }
+            set
+            {
+                RapidCodeLineSanitizer.SanitizeResult result = RapidCodeLineSanitizer.Sanitize(value);
+                _code = result.Code;
+                _warnings = result.Warnings;
+            }
+        }
+
+        /// <summary>
+        /// Gets the list of sanitization warnings for this code line.
+        /// </summary>
+        public IReadOnlyList<string> Warnings
+        {
+            get { return _warnings; }
         }
 
         /// <summary>
