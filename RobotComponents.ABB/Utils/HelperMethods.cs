@@ -30,6 +30,7 @@ namespace RobotComponents.ABB.Utils
     {
         #region fields
         private static readonly Regex _rapidDataRegex = new Regex(@"[\s;:\[\]\(\){}]", RegexOptions.Compiled);
+        private static readonly Regex _rapidIdentifierRegex = new Regex(@"^[a-zA-Z_][a-zA-Z0-9_]{0,31}$", RegexOptions.Compiled);
         #endregion
 
         #region methods
@@ -261,6 +262,40 @@ namespace RobotComponents.ABB.Utils
             }
 
             return text.Substring(0, position) + replace + text.Substring(position + search.Length);
+        }
+
+        /// <summary>
+        /// Returns a value indicating whether the given string is a valid RAPID identifier.
+        /// </summary>
+        /// <remarks>
+        /// A valid RAPID identifier starts with a letter or underscore, contains only
+        /// letters, digits, and underscores, and is at most 32 characters long.
+        /// </remarks>
+        /// <param name="name"> The identifier to validate. </param>
+        /// <returns>
+        /// <see langword="true"/> if <paramref name="name"/> is a valid RAPID identifier;
+        /// otherwise, <see langword="false"/>.
+        /// </returns>
+        public static bool IsValidRapidIdentifier(string name)
+        {
+            if (name == null) { return false; }
+            return _rapidIdentifierRegex.IsMatch(name);
+        }
+
+        /// <summary>
+        /// Throws an <see cref="InvalidOperationException"/> if the given string is not a valid RAPID identifier.
+        /// </summary>
+        /// <param name="name"> The identifier to validate. </param>
+        /// <exception cref="InvalidOperationException">
+        /// <paramref name="name"/> is not a valid RAPID identifier.
+        /// </exception>
+        public static void ThrowIfInvalidRapidIdentifier(string name)
+        {
+            if (!IsValidRapidIdentifier(name))
+            {
+                throw new InvalidOperationException(
+                    $"Cannot generate RAPID instruction: '{name}' is not a valid RAPID identifier.");
+            }
         }
 
         /// <summary>

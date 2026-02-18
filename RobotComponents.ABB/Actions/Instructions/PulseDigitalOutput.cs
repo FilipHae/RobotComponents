@@ -15,6 +15,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 // RobotComponents Libs
 using RobotComponents.ABB.Definitions;
+using RobotComponents.ABB.Utils;
 
 namespace RobotComponents.ABB.Actions.Instructions
 {
@@ -172,6 +173,8 @@ namespace RobotComponents.ABB.Actions.Instructions
         /// </returns>
         public string ToRAPIDInstruction(Robot robot)
         {
+            HelperMethods.ThrowIfInvalidRapidIdentifier(_name);
+
             if (_high == false)
             {
                 return $"PulseDO \\PLength:={_length:#.###}, {_name};";
@@ -205,6 +208,7 @@ namespace RobotComponents.ABB.Actions.Instructions
             {
                 if (_name == null) { return false; }
                 if (_name == "") { return false; }
+                if (!HelperMethods.IsValidRapidIdentifier(_name)) { return false; }
                 if (_length < 0.001) { return false; }
                 if (_length > 2000) { return false; }
                 return true;

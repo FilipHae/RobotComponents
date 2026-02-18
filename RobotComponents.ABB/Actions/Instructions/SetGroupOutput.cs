@@ -16,6 +16,7 @@ using System.Runtime.Serialization;
 using System.Security.Permissions;
 // RobotComponents Libs
 using RobotComponents.ABB.Definitions;
+using RobotComponents.ABB.Utils;
 
 namespace RobotComponents.ABB.Actions.Instructions
 {
@@ -167,6 +168,8 @@ namespace RobotComponents.ABB.Actions.Instructions
         /// </returns>
         public string ToRAPIDInstruction(Robot robot)
         {
+            HelperMethods.ThrowIfInvalidRapidIdentifier(_name);
+
             return $"SetGO {_name}, {_value};";
         }
 
@@ -193,6 +196,7 @@ namespace RobotComponents.ABB.Actions.Instructions
             {
                 if (_name == null) { return false; }
                 if (_name == "") { return false; }
+                if (!HelperMethods.IsValidRapidIdentifier(_name)) { return false; }
                 return true;
             }
         }
