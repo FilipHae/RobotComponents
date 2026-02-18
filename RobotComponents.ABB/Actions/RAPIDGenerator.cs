@@ -81,6 +81,7 @@ namespace RobotComponents.ABB.Actions
 
         // Checks
         private readonly List<string> _errorText = new List<string>();
+        private bool _enforceAxisLimits = true;
         private bool _isFirstMovementMoveAbsJ;
         private bool _isSynchronized = false;
         #endregion
@@ -135,6 +136,7 @@ namespace RobotComponents.ABB.Actions
             _procedureName = generator.ProcedureName;
             _robot = generator.Robot.Duplicate();
             _isFirstMovementMoveAbsJ = generator.IsFirstMovementMoveAbsJ;
+            _enforceAxisLimits = generator.EnforceAxisLimits;
             _scope = generator.RoutineScope;
             _mainModule = generator._mainModule;
             _additionalRoutines = generator._additionalRoutines;
@@ -269,6 +271,18 @@ namespace RobotComponents.ABB.Actions
                         }
                     }
                 }
+            }
+
+            // Collect errors from additional routine generators
+            foreach (RAPIDGenerator routineGenerator in _additionalRoutineGenerators)
+            {
+                _errorText.AddRange(routineGenerator.ErrorText);
+            }
+
+            // Abort module generation if violations are detected and enforcement is enabled
+            if (_enforceAxisLimits && _errorText.Count > 0)
+            {
+                return _module;
             }
             #endregion
 
@@ -785,11 +799,24 @@ namespace RobotComponents.ABB.Actions
         }
 
         /// <summary>
-        /// Gets the collected error messages. 
+        /// Gets the collected error messages.
         /// </summary>
         public List<string> ErrorText
         {
             get { return _errorText; }
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether axis limit violations and other
+        /// errors detected during target conversion should prevent RAPID module generation.
+        /// When true (default), CreateModule returns an empty module and populates ErrorText
+        /// if any errors are detected. When false, errors are reported in ErrorText as
+        /// warnings but code generation proceeds.
+        /// </summary>
+        public bool EnforceAxisLimits
+        {
+            get { return _enforceAxisLimits; }
+            set { _enforceAxisLimits = value; }
         }
 
         /// <summary>

@@ -27,12 +27,26 @@ namespace RobotComponents.Tests.Actions
     {
         /// <summary>
         /// Creates a test robot and generates a RAPID module from the given actions.
+        /// EnforceAxisLimits defaults to true, so actions with out-of-range values will
+        /// produce an empty module.
         /// </summary>
         private List<string> GenerateModule(IList<IAction> actions)
         {
             Robot robot = Factory.GetRobotPreset(RobotPreset.IRB120_3_058, Plane.WorldXY);
             RAPIDGenerator generator = new RAPIDGenerator(robot);
             return generator.CreateModule(actions);
+        }
+
+        /// <summary>
+        /// Creates a test robot and generates a RAPID module, returning the generator for error inspection.
+        /// </summary>
+        private RAPIDGenerator GenerateModuleWithGenerator(IList<IAction> actions, bool enforceAxisLimits = true)
+        {
+            Robot robot = Factory.GetRobotPreset(RobotPreset.IRB120_3_058, Plane.WorldXY);
+            RAPIDGenerator generator = new RAPIDGenerator(robot);
+            generator.EnforceAxisLimits = enforceAxisLimits;
+            generator.CreateModule(actions);
+            return generator;
         }
 
         #region MoveAbsJ
@@ -309,6 +323,25 @@ namespace RobotComponents.Tests.Actions
             string joined = string.Join(Environment.NewLine, module);
 
             Assert.DoesNotContain("\\T", joined);
+        }
+        #endregion
+
+        #region Axis Limit Check on IK-Converted Target
+        [Fact]
+        [Trait("Category", "RequiresRhino")]
+        public void MoveAbsJ_RobotTargetConvertedViaIK_ChecksAxisLimits()
+        {
+            // Place a target behind the robot so IK produces axis 1 near ±180°,
+            // exceeding the IRB120's [-165, 165] limit for axis 1.
+            Plane behindRobot = new Plane(new Point3d(-300, 0, 300), -Vector3d.XAxis, Vector3d.ZAxis);
+            RobotTarget target = new RobotTarget("rt_behind", behindRobot);
+            Movement move = new Movement(MovementType.MoveAbsJ, target, new SpeedData(100), new ZoneData(10));
+
+            RAPIDGenerator generator = GenerateModuleWithGenerator(new List<IAction> { move }, enforceAxisLimits: false);
+
+            // The IK-converted JointTarget should produce axis limit errors
+            Assert.NotEmpty(generator.ErrorText);
+            Assert.Contains(generator.ErrorText, e => e.Contains("not in range"));
         }
         #endregion
 
