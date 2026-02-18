@@ -97,10 +97,23 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
             if (!DA.GetData(3, ref stop)) { stop = false; }
             if (!DA.GetData(4, ref reset)) { reset = false; }
 
-            // Determine controller type and update interlock state
+            // Determine controller type and update interlock state.
+            // Empty controllers are treated as disconnected, not virtual.
+            if (_controller.IsEmpty)
+            {
+                this.Message = "-";
+            }
+            else if (_controller.IsVirtual)
+            {
+                this.Message = "VIRTUAL";
+            }
+            else
+            {
+                this.Message = arm ? "ARMED" : "DISARMED";
+            }
+
             bool isPhysical = !_controller.IsEmpty && !_controller.IsVirtual;
             bool armed = IsExecutionPermitted(arm, isPhysical);
-            this.Message = isPhysical ? (arm ? "ARMED" : "DISARMED") : "VIRTUAL";
 
             if (run)
             {
@@ -121,6 +134,9 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
                 }
             }
 
+            // Stop and Reset intentionally bypass the Arm interlock so the
+            // operator can always halt or reset a running program regardless
+            // of the armed state.
             if (stop)
             {
                 _succeeded = _controller.StopProgram(out _status);
