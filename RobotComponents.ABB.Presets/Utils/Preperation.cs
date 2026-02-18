@@ -289,6 +289,9 @@ namespace RobotComponents.ABB.Presets.Utils
                     before.Add(existingObjects[j].Id);
                 }
 
+                // Validate file path to prevent command injection (OWASP A03, issue #35)
+                HelperMethods.ThrowIfUnsafeFilePath(filePath);
+
                 // Import STEP file
                 string command = "-_Import \"" + filePath + "\" _Enter";
                 RhinoApp.RunScript(command, false);
@@ -325,6 +328,7 @@ namespace RobotComponents.ABB.Presets.Utils
             }
 
             // Step 3: Purge unused definitions (run multiple times to be thorough)
+            // Hardcoded commands — no user input interpolated, safe from injection.
             RhinoApp.RunScript("_-Purge _All _Yes _Enter", false);
             RhinoApp.RunScript("_-Purge _All _Yes _Enter", false);
             RhinoApp.RunScript("_-Purge _All _Yes _Enter", false);
