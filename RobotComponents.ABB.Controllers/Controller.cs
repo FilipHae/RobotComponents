@@ -1120,6 +1120,15 @@ namespace RobotComponents.ABB.Controllers
             Log(status);
             moduleName = module[0].Substring(7).Trim();
             moduleName = moduleName.Split(' ')[0];
+
+            // Validate module name to prevent path traversal (OWASP A03, issue #36)
+            if (!HelperMethods.IsValidRapidIdentifier(moduleName))
+            {
+                status = "Could not upload the module: The module name is not a valid RAPID identifier.";
+                Log(status);
+                return false;
+            }
+
             moduleName += ".MOD";
 
             status = $"Module name retreived: {moduleName}";
@@ -1159,7 +1168,14 @@ namespace RobotComponents.ABB.Controllers
             }
 
             string filePathLocal = Path.Combine(_localDirectory, moduleName);
-            
+
+            if (!HelperMethods.IsPathWithinDirectory(_localDirectory, filePathLocal))
+            {
+                status = "Could not upload the module: The resolved file path escapes the target directory.";
+                Log(status);
+                return false;
+            }
+
             try
             {
                 using (StreamWriter writer = new StreamWriter(filePathLocal, false))
@@ -1220,6 +1236,13 @@ namespace RobotComponents.ABB.Controllers
 
                     // Load the new program from the drive
                     string filePathRemote = Path.Combine(_remoteDirectory, moduleName);
+
+                    if (!HelperMethods.IsPathWithinDirectory(_remoteDirectory, filePathRemote))
+                    {
+                        status = "Could not upload the module: The resolved remote file path escapes the target directory.";
+                        Log(status);
+                        return false;
+                    }
 
                     task.LoadModuleFromFile(filePathRemote, RapidDomainNS.RapidLoadMode.Replace);
 
@@ -1351,11 +1374,37 @@ namespace RobotComponents.ABB.Controllers
                 Log(status);
                 string moduleName = module[0].Substring(7).Trim();
                 moduleName = moduleName.Split(' ')[0];
+
+                // Validate module name to prevent path traversal (OWASP A03, issue #36)
+                if (!HelperMethods.IsValidRapidIdentifier(moduleName))
+                {
+                    status = "Could not upload the module: The module name is not a valid RAPID identifier.";
+                    Log(status);
+                    return false;
+                }
+
                 moduleName += ".MOD";
                 status = $"Module name retreived: {moduleName}";
 
                 string filePathLocal = Path.Combine(_localAdditionalDirectory, moduleName);
-                remotefilePaths.Add(Path.Combine(_remoteAdditionalDirectory, moduleName));
+
+                if (!HelperMethods.IsPathWithinDirectory(_localAdditionalDirectory, filePathLocal))
+                {
+                    status = "Could not upload the module: The resolved file path escapes the target directory.";
+                    Log(status);
+                    return false;
+                }
+
+                string remoteFilePath = Path.Combine(_remoteAdditionalDirectory, moduleName);
+
+                if (!HelperMethods.IsPathWithinDirectory(_remoteAdditionalDirectory, remoteFilePath))
+                {
+                    status = "Could not upload the module: The resolved remote file path escapes the target directory.";
+                    Log(status);
+                    return false;
+                }
+
+                remotefilePaths.Add(remoteFilePath);
 
                 try
                 {
@@ -1547,10 +1596,26 @@ namespace RobotComponents.ABB.Controllers
             Log(status);
             string moduleName = module[0].Substring(7).Trim();
             moduleName = moduleName.Split(' ')[0];
+
+            // Validate module name to prevent path traversal (OWASP A03, issue #36)
+            if (!HelperMethods.IsValidRapidIdentifier(moduleName))
+            {
+                status = "Could not upload the module: The module name is not a valid RAPID identifier.";
+                Log(status);
+                return false;
+            }
+
             moduleName += ".SYS";
             status = $"Module name retreived: {moduleName}";
 
             string filePathLocal = Path.Combine(_localSystemDirectory, moduleName);
+
+            if (!HelperMethods.IsPathWithinDirectory(_localSystemDirectory, filePathLocal))
+            {
+                status = "Could not upload the module: The resolved file path escapes the target directory.";
+                Log(status);
+                return false;
+            }
 
             try
             {
