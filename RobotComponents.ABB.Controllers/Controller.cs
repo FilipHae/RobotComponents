@@ -2211,7 +2211,23 @@ namespace RobotComponents.ABB.Controllers
         }
 
         /// <summary>
-        /// Gets the analog inputs. 
+        /// Gets a value indicating whether this controller is a virtual (simulated) controller.
+        /// </summary>
+        /// <remarks>
+        /// Virtual controllers run inside RobotStudio or a similar simulation environment and do not
+        /// control physical hardware. Returns <c>false</c> if the controller instance is empty.
+        /// </remarks>
+        public bool IsVirtual
+        {
+            get
+            {
+                if (_isEmpty || _controller == null) return false;
+                return _controller.IsVirtual;
+            }
+        }
+
+        /// <summary>
+        /// Gets the analog inputs.
         /// </summary>
         public List<Signal> AnalogInputs
         {
