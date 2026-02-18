@@ -55,6 +55,37 @@ namespace RobotComponents.ABB.Actions.Declarations
         private static readonly double[] _predefinedZoneOri = new double[] { 0, 0.03, 0.1, 0.8, 1.5, 2.3, 3, 4.5, 6, 7.5, 9, 12, 15, 23, 30 };
         private static readonly double[] _predefinedZoneLeax = new double[] { 0, 0.3, 1, 8, 15, 23, 30, 45, 60, 75, 90, 120, 150, 225, 300 };
         private static readonly double[] _predefinedZoneReax = new double[] { 0, 0.03, 0.1, 0.8, 1.5, 2.3, 3, 4.5, 6, 7.5, 9, 12, 15, 23, 30 };
+
+        /// <summary>
+        /// The recommended maximum TCP zone radius in mm (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxPathZoneTCP = _predefinedPathZoneTCP.Last();
+
+        /// <summary>
+        /// The recommended maximum tool reorientation zone radius in mm (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxPathZoneORI = _predefinedPathZoneOri.Last();
+
+        /// <summary>
+        /// The recommended maximum external axes zone radius in mm (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxPathZoneEAX = _predefinedPathZoneEax.Last();
+
+        /// <summary>
+        /// The recommended maximum tool reorientation zone in degrees (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxZoneORI = _predefinedZoneOri.Last();
+
+        /// <summary>
+        /// The recommended maximum linear external axes zone in mm (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxZoneLEAX = _predefinedZoneLeax.Last();
+
+        /// <summary>
+        /// The recommended maximum rotating external axes zone in degrees (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxZoneREAX = _predefinedZoneReax.Last();
+
         #endregion
 
         #region (de)serialization
@@ -496,7 +527,45 @@ namespace RobotComponents.ABB.Actions.Declarations
         }
 
         /// <summary>
-        /// Gets or sets the scope. 
+        /// Returns a value indicating whether any zone parameter exceeds the recommended maximum limits.
+        /// </summary>
+        /// <returns> True if any zone value exceeds the recommended limit. </returns>
+        public bool ExceedsRecommendedLimits()
+        {
+            return _pzone_tcp > RecommendedMaxPathZoneTCP
+                || _pzone_ori > RecommendedMaxPathZoneORI
+                || _pzone_eax > RecommendedMaxPathZoneEAX
+                || _zone_ori > RecommendedMaxZoneORI
+                || _zone_leax > RecommendedMaxZoneLEAX
+                || _zone_reax > RecommendedMaxZoneREAX;
+        }
+
+        /// <summary>
+        /// Returns a warning message listing each zone parameter that exceeds its recommended maximum.
+        /// </summary>
+        /// <returns> A warning string, or an empty string if no limits are exceeded. </returns>
+        public string GetExceededLimitWarnings()
+        {
+            List<string> exceeded = new List<string>();
+
+            if (_pzone_tcp > RecommendedMaxPathZoneTCP)
+                exceeded.Add($"PathZoneTCP ({_pzone_tcp}) exceeds recommended maximum ({RecommendedMaxPathZoneTCP} mm)");
+            if (_pzone_ori > RecommendedMaxPathZoneORI)
+                exceeded.Add($"PathZoneORI ({_pzone_ori}) exceeds recommended maximum ({RecommendedMaxPathZoneORI} mm)");
+            if (_pzone_eax > RecommendedMaxPathZoneEAX)
+                exceeded.Add($"PathZoneEAX ({_pzone_eax}) exceeds recommended maximum ({RecommendedMaxPathZoneEAX} mm)");
+            if (_zone_ori > RecommendedMaxZoneORI)
+                exceeded.Add($"ZoneORI ({_zone_ori}) exceeds recommended maximum ({RecommendedMaxZoneORI} deg)");
+            if (_zone_leax > RecommendedMaxZoneLEAX)
+                exceeded.Add($"ZoneLEAX ({_zone_leax}) exceeds recommended maximum ({RecommendedMaxZoneLEAX} mm)");
+            if (_zone_reax > RecommendedMaxZoneREAX)
+                exceeded.Add($"ZoneREAX ({_zone_reax}) exceeds recommended maximum ({RecommendedMaxZoneREAX} deg)");
+
+            return string.Join("; ", exceeded);
+        }
+
+        /// <summary>
+        /// Gets or sets the scope.
         /// </summary>
         public Scope Scope
         {

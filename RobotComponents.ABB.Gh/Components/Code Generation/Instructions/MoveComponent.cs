@@ -238,6 +238,18 @@ namespace RobotComponents.ABB.Gh.Components.CodeGeneration
                     "5000, 6000 and 7000.");
             }
 
+            // Check if speed values exceed recommended limits
+            if (speedData.ExceedsRecommendedLimits())
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, speedData.GetExceededLimitWarnings());
+            }
+
+            // Check if zone values exceed recommended limits
+            if (zoneData.ExceedsRecommendedLimits())
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, zoneData.GetExceededLimitWarnings());
+            }
+
             // Check target and movement combination
             if (movement.MovementType == MovementType.MoveAbsJ && movement.Target is RobotTarget)
             {

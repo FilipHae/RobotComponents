@@ -236,6 +236,119 @@ namespace RobotComponents.Tests.Actions
         }
         #endregion
 
+        #region ExceedsRecommendedLimits
+        [Fact]
+        public void ExceedsRecommendedLimits_AllWithinLimits_ReturnsFalse()
+        {
+            ZoneData zd = new ZoneData("z", false, 100, 200, 200, 15, 200, 15);
+
+            Assert.False(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_PathZoneTcpExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 201, 0, 0, 0, 0, 0);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_PathZoneOriExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 0, 301, 0, 0, 0, 0);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_ZoneOriExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 0, 0, 0, 31, 0, 0);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_PathZoneEaxExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 0, 0, 301, 0, 0, 0);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_ZoneLeaxExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 0, 0, 0, 0, 301, 0);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_ZoneReaxExceeds_ReturnsTrue()
+        {
+            ZoneData zd = new ZoneData("z", false, 0, 0, 0, 0, 0, 31);
+
+            Assert.True(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_AtExactLimit_ReturnsFalse()
+        {
+            ZoneData zd = new ZoneData("z", false, 200, 300, 300, 30, 300, 30);
+
+            Assert.False(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_FinePoint_ReturnsFalse()
+        {
+            ZoneData zd = new ZoneData(-1);
+
+            Assert.False(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_PredefinedMax_ReturnsFalse()
+        {
+            ZoneData zd = new ZoneData(200);
+
+            Assert.False(zd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_NoneExceeded_ReturnsEmpty()
+        {
+            ZoneData zd = new ZoneData("z", false, 100, 200, 200, 15, 200, 15);
+
+            Assert.Equal(string.Empty, zd.GetExceededLimitWarnings());
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_TcpExceeded_ContainsPathZoneTCP()
+        {
+            ZoneData zd = new ZoneData("z", false, 500, 0, 0, 0, 0, 0);
+
+            string warnings = zd.GetExceededLimitWarnings();
+
+            Assert.Contains("PathZoneTCP (500)", warnings);
+            Assert.DoesNotContain("PathZoneORI", warnings);
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_MultipleExceeded_ContainsAll()
+        {
+            ZoneData zd = new ZoneData("z", false, 500, 400, 0, 0, 0, 0);
+
+            string warnings = zd.GetExceededLimitWarnings();
+
+            Assert.Contains("PathZoneTCP (500)", warnings);
+            Assert.Contains("PathZoneORI (400)", warnings);
+            Assert.DoesNotContain("PathZoneEAX", warnings);
+        }
+        #endregion
+
         #region Duplicate
         [Fact]
         public void Duplicate_ReturnsMatchingValues()

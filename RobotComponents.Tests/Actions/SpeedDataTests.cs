@@ -234,6 +234,96 @@ namespace RobotComponents.Tests.Actions
         }
         #endregion
 
+        #region ExceedsRecommendedLimits
+        [Fact]
+        public void ExceedsRecommendedLimits_AllWithinLimits_ReturnsFalse()
+        {
+            SpeedData sd = new SpeedData("s", 100, 500, 5000, 1000);
+
+            Assert.False(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_TcpExceeds_ReturnsTrue()
+        {
+            SpeedData sd = new SpeedData("s", 7001, 500, 5000, 1000);
+
+            Assert.True(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_OriExceeds_ReturnsTrue()
+        {
+            SpeedData sd = new SpeedData("s", 100, 1001, 5000, 1000);
+
+            Assert.True(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_LeaxExceeds_ReturnsTrue()
+        {
+            SpeedData sd = new SpeedData("s", 100, 500, 5001, 1000);
+
+            Assert.True(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_ReaxExceeds_ReturnsTrue()
+        {
+            SpeedData sd = new SpeedData("s", 100, 500, 5000, 1001);
+
+            Assert.True(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_AtExactLimit_ReturnsFalse()
+        {
+            SpeedData sd = new SpeedData("s", 7000, 1000, 5000, 1000);
+
+            Assert.False(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void ExceedsRecommendedLimits_PredefinedMax_ReturnsFalse()
+        {
+            SpeedData sd = new SpeedData(7000);
+
+            Assert.False(sd.ExceedsRecommendedLimits());
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_NoneExceeded_ReturnsEmpty()
+        {
+            SpeedData sd = new SpeedData("s", 100, 500, 5000, 1000);
+
+            Assert.Equal(string.Empty, sd.GetExceededLimitWarnings());
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_TcpExceeded_ContainsVTCP()
+        {
+            SpeedData sd = new SpeedData("s", 8000, 500, 5000, 1000);
+
+            string warnings = sd.GetExceededLimitWarnings();
+
+            Assert.Contains("V_TCP (8000)", warnings);
+            Assert.DoesNotContain("V_ORI", warnings);
+        }
+
+        [Fact]
+        public void GetExceededLimitWarnings_MultipleExceeded_ContainsAll()
+        {
+            SpeedData sd = new SpeedData("s", 8000, 2000, 5000, 1000);
+
+            string warnings = sd.GetExceededLimitWarnings();
+
+            Assert.Contains("V_TCP (8000)", warnings);
+            Assert.Contains("V_ORI (2000)", warnings);
+            Assert.DoesNotContain("V_LEAX", warnings);
+            Assert.DoesNotContain("V_REAX", warnings);
+        }
+        #endregion
+
         #region Duplicate
         [Fact]
         public void Duplicate_CustomSpeed_ReturnsSameValues()

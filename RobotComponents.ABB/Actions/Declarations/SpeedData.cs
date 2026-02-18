@@ -49,6 +49,26 @@ namespace RobotComponents.ABB.Actions.Declarations
         private static readonly string[] _validPredefinedNames = new string[] { "v5", "v10", "v20", "v30", "v40", "v50", "v60", "v80", "v100", "v150", "v200", "v300", "v400", "v500", "v600", "v800", "v1000", "v1500", "v2000", "v2500", "v3000", "v4000", "v5000", "v6000", "v7000" };
         private static readonly double[] _validPredefinedValues = new double[] { 5, 10, 20, 30, 40, 50, 60, 80, 100, 150, 200, 300, 400, 500, 600, 800, 1000, 1500, 2000, 2500, 3000, 4000, 5000, 6000, 7000 };
 
+        /// <summary>
+        /// The recommended maximum TCP velocity in mm/s (derived from highest predefined value).
+        /// </summary>
+        public static readonly double RecommendedMaxTCP = _validPredefinedValues.Last();
+
+        /// <summary>
+        /// The recommended maximum reorientation velocity in degrees/s.
+        /// </summary>
+        public static readonly double RecommendedMaxORI = 1000;
+
+        /// <summary>
+        /// The recommended maximum linear external axes velocity in mm/s.
+        /// </summary>
+        public static readonly double RecommendedMaxLEAX = 5000;
+
+        /// <summary>
+        /// The recommended maximum rotating external axes velocity in degrees/s.
+        /// </summary>
+        public static readonly double RecommendedMaxREAX = 1000;
+
         #endregion
 
         #region (de)serialization
@@ -406,7 +426,39 @@ namespace RobotComponents.ABB.Actions.Declarations
         }
 
         /// <summary>
-        /// Gets or sets the scope. 
+        /// Returns a value indicating whether any speed parameter exceeds the recommended maximum limits.
+        /// </summary>
+        /// <returns> True if any speed value exceeds the recommended limit. </returns>
+        public bool ExceedsRecommendedLimits()
+        {
+            return _v_tcp > RecommendedMaxTCP
+                || _v_ori > RecommendedMaxORI
+                || _v_leax > RecommendedMaxLEAX
+                || _v_reax > RecommendedMaxREAX;
+        }
+
+        /// <summary>
+        /// Returns a warning message listing each speed parameter that exceeds its recommended maximum.
+        /// </summary>
+        /// <returns> A warning string, or an empty string if no limits are exceeded. </returns>
+        public string GetExceededLimitWarnings()
+        {
+            List<string> exceeded = new List<string>();
+
+            if (_v_tcp > RecommendedMaxTCP)
+                exceeded.Add($"V_TCP ({_v_tcp}) exceeds recommended maximum ({RecommendedMaxTCP} mm/s)");
+            if (_v_ori > RecommendedMaxORI)
+                exceeded.Add($"V_ORI ({_v_ori}) exceeds recommended maximum ({RecommendedMaxORI} deg/s)");
+            if (_v_leax > RecommendedMaxLEAX)
+                exceeded.Add($"V_LEAX ({_v_leax}) exceeds recommended maximum ({RecommendedMaxLEAX} mm/s)");
+            if (_v_reax > RecommendedMaxREAX)
+                exceeded.Add($"V_REAX ({_v_reax}) exceeds recommended maximum ({RecommendedMaxREAX} deg/s)");
+
+            return string.Join("; ", exceeded);
+        }
+
+        /// <summary>
+        /// Gets or sets the scope.
         /// </summary>
         public Scope Scope
         {
