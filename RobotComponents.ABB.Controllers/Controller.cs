@@ -2006,6 +2006,20 @@ namespace RobotComponents.ABB.Controllers
                 return false;
             }
 
+            else if (_controller.State == ControllersNS.ControllerState.EmergencyStop)
+            {
+                status = "Could not start the program: The controller is in emergency stop.";
+                Log(status);
+                return false;
+            }
+
+            else if (_controller.State == ControllersNS.ControllerState.GuardStop)
+            {
+                status = "Could not start the program: The controller is in guard stop.";
+                Log(status);
+                return false;
+            }
+
             else if (_controller.State != ControllersNS.ControllerState.MotorsOn)
             {
                 status = "Could not start the program: The motors are not on.";
