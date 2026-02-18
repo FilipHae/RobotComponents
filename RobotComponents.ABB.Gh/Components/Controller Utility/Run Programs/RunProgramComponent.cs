@@ -113,7 +113,7 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
             }
 
             bool isPhysical = !_controller.IsEmpty && !_controller.IsVirtual;
-            bool armed = IsExecutionPermitted(arm, isPhysical);
+            bool armed = Controller.IsExecutionPermitted(arm, isPhysical);
 
             if (run)
             {
@@ -159,22 +159,6 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
 
             // Output
             DA.SetData(0, _status);
-        }
-
-        /// <summary>
-        /// Determines whether program execution is permitted given the armed state and controller type.
-        /// </summary>
-        /// <param name="armed"> Whether the safety interlock has been armed via the Arm input. </param>
-        /// <param name="isPhysical"> Whether the target controller is a physical (non-virtual) controller. </param>
-        /// <returns>
-        /// <c>true</c> if execution is permitted; <c>false</c> if the interlock blocks execution.
-        /// Virtual controllers always permit execution regardless of the armed state.
-        /// Physical controllers require <paramref name="armed"/> to be <c>true</c>.
-        /// </returns>
-        public static bool IsExecutionPermitted(bool armed, bool isPhysical)
-        {
-            if (!isPhysical) return true;
-            return armed;
         }
 
         #region properties

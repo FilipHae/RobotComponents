@@ -9,7 +9,6 @@
 using Xunit;
 // Robot Components Libs
 using RobotComponents.ABB.Controllers;
-using RobotComponents.ABB.Gh.Components.ControllerUtility;
 
 namespace RobotComponents.Tests.Controllers
 {
@@ -37,25 +36,25 @@ namespace RobotComponents.Tests.Controllers
         [Fact]
         public void IsExecutionPermitted_PhysicalNotArmed_ReturnsFalse()
         {
-            Assert.False(RunProgramComponent.IsExecutionPermitted(armed: false, isPhysical: true));
+            Assert.False(Controller.IsExecutionPermitted(armed: false, isPhysical: true));
         }
 
         [Fact]
         public void IsExecutionPermitted_PhysicalArmed_ReturnsTrue()
         {
-            Assert.True(RunProgramComponent.IsExecutionPermitted(armed: true, isPhysical: true));
+            Assert.True(Controller.IsExecutionPermitted(armed: true, isPhysical: true));
         }
 
         [Fact]
         public void IsExecutionPermitted_VirtualNotArmed_ReturnsTrue()
         {
-            Assert.True(RunProgramComponent.IsExecutionPermitted(armed: false, isPhysical: false));
+            Assert.True(Controller.IsExecutionPermitted(armed: false, isPhysical: false));
         }
 
         [Fact]
         public void IsExecutionPermitted_VirtualArmed_ReturnsTrue()
         {
-            Assert.True(RunProgramComponent.IsExecutionPermitted(armed: true, isPhysical: false));
+            Assert.True(Controller.IsExecutionPermitted(armed: true, isPhysical: false));
         }
     }
 }
