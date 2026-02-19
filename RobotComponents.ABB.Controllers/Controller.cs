@@ -1204,12 +1204,11 @@ namespace RobotComponents.ABB.Controllers
                 status = "Acquired the WriteFTP grant.";
                 Log(status);
             }
-            catch
+            catch (Exception e)
             {
-                status = "Could not acquire the WriteFTP grant for the current user.";
+                status = $"Could not acquire the WriteFTP grant for the current user: {e.Message}";
                 Log(status);
-
-                // No return false: keep trying to the put the local directory on the controller disk.
+                return false;
             }
             try
             {
@@ -1231,9 +1230,19 @@ namespace RobotComponents.ABB.Controllers
             {
                 try
                 {
-                    // Grant acces
                     _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.LoadRapidProgram);
+                    status = "Acquired the LoadRapidProgram grant.";
+                    Log(status);
+                }
+                catch (Exception e)
+                {
+                    status = $"Could not acquire the LoadRapidProgram grant: {e.Message}.";
+                    Log(status);
+                    return false;
+                }
 
+                try
+                {
                     // Load the new program from the drive
                     string filePathRemote = Path.Combine(_remoteDirectory, moduleName);
 
@@ -1435,12 +1444,11 @@ namespace RobotComponents.ABB.Controllers
                 status = "Acquired the WriteFTP grant.";
                 Log(status);
             }
-            catch
+            catch (Exception e)
             {
-                status = "Could not acquire the WriteFTP grant for the current user.";
+                status = $"Could not acquire the WriteFTP grant for the current user: {e.Message}";
                 Log(status);
-
-                // No return false: keep trying to the put the local directory on the controller disk.
+                return false;
             }
             try
             {
@@ -1470,12 +1478,21 @@ namespace RobotComponents.ABB.Controllers
             {
                 try
                 {
+                    _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.LoadRapidProgram);
+                    status = "Acquired the LoadRapidProgram grant.";
+                    Log(status);
+                }
+                catch (Exception e)
+                {
+                    status = $"Could not acquire the LoadRapidProgram grant: {e.Message}.";
+                    Log(status);
+                    return false;
+                }
+
+                try
+                {
                     foreach (string filePathRemote in remotefilePaths)
                     {
-                        // Grant acces
-                        _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.LoadRapidProgram);
-
-                        // Load the new program from the drive
                         task.LoadModuleFromFile(filePathRemote, RapidDomainNS.RapidLoadMode.Replace);
 
                         status = "Loaded a module from the filesystem of the controller to the controller task.";
@@ -1645,12 +1662,11 @@ namespace RobotComponents.ABB.Controllers
                 status = "Acquired the WriteFTP grant.";
                 Log(status);
             }
-            catch
+            catch (Exception e)
             {
-                status = "Could not acquire the WriteFTP grant for the current user.";
+                status = $"Could not acquire the WriteFTP grant for the current user: {e.Message}";
                 Log(status);
-
-                // No return false: keep trying to the put the local directory on the controller disk.
+                return false;
             }
             try
             {
@@ -1894,7 +1910,16 @@ namespace RobotComponents.ABB.Controllers
             {
                 if (_controller.OperatingMode == ControllersNS.ControllerOperatingMode.Auto)
                 {
-                    _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.ExecuteRapid);
+                    try
+                    {
+                        _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.ExecuteRapid);
+                    }
+                    catch (Exception e)
+                    {
+                        status = $"Could not acquire the ExecuteRapid grant: {e.Message}";
+                        Log(status);
+                        return false;
+                    }
 
                     try
                     {
@@ -1952,7 +1977,16 @@ namespace RobotComponents.ABB.Controllers
             {
                 if (_controller.OperatingMode == ControllersNS.ControllerOperatingMode.Auto)
                 {
-                    _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.ExecuteRapid);
+                    try
+                    {
+                        _controller.AuthenticationSystem.DemandGrant(ControllersNS.Grant.ExecuteRapid);
+                    }
+                    catch (Exception e)
+                    {
+                        status = $"Could not acquire the ExecuteRapid grant: {e.Message}";
+                        Log(status);
+                        return false;
+                    }
 
                     try
                     {
