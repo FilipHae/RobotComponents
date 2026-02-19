@@ -2006,6 +2006,20 @@ namespace RobotComponents.ABB.Controllers
                 return false;
             }
 
+            else if (_controller.State == ControllersNS.ControllerState.EmergencyStop)
+            {
+                status = "Could not start the program: The controller is in emergency stop.";
+                Log(status);
+                return false;
+            }
+
+            else if (_controller.State == ControllersNS.ControllerState.GuardStop)
+            {
+                status = "Could not start the program: The controller is in guard stop.";
+                Log(status);
+                return false;
+            }
+
             else if (_controller.State != ControllersNS.ControllerState.MotorsOn)
             {
                 status = "Could not start the program: The motors are not on.";
@@ -2114,6 +2128,21 @@ namespace RobotComponents.ABB.Controllers
 
             return _controller.Rapid.GetRapidData(task, module, variable).StringValue;
         }
+        /// <summary>
+        /// Determines whether program execution is permitted given the armed state and controller type.
+        /// </summary>
+        /// <param name="armed"> Whether the safety interlock has been armed via the Arm input. </param>
+        /// <param name="isPhysical"> Whether the target controller is a physical (non-virtual) controller. </param>
+        /// <returns>
+        /// <c>true</c> if execution is permitted; <c>false</c> if the interlock blocks execution.
+        /// Virtual controllers always permit execution regardless of the armed state.
+        /// Physical controllers require <paramref name="armed"/> to be <c>true</c>.
+        /// </returns>
+        public static bool IsExecutionPermitted(bool armed, bool isPhysical)
+        {
+            if (!isPhysical) return true;
+            return armed;
+        }
         #endregion
 
         #region static properties
@@ -2211,7 +2240,23 @@ namespace RobotComponents.ABB.Controllers
         }
 
         /// <summary>
-        /// Gets the analog inputs. 
+        /// Gets a value indicating whether this controller is a virtual (simulated) controller.
+        /// </summary>
+        /// <remarks>
+        /// Virtual controllers run inside RobotStudio or a similar simulation environment and do not
+        /// control physical hardware. Returns <c>false</c> if the controller instance is empty.
+        /// </remarks>
+        public bool IsVirtual
+        {
+            get
+            {
+                if (_isEmpty || _controller == null) return false;
+                return _controller.IsVirtual;
+            }
+        }
+
+        /// <summary>
+        /// Gets the analog inputs.
         /// </summary>
         public List<Signal> AnalogInputs
         {

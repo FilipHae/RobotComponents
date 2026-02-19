@@ -1,11 +1,16 @@
-﻿// SPDX-License-Identifier: GPL-3.0-or-later
-// This file is part of Robot Components
-// Project: https://github.com/RobotComponents/RobotComponents
+// SPDX-License-Identifier: GPL-3.0-or-later
+// This file is part of Robot Components (Modified)
+// Original project: https://github.com/RobotComponents/RobotComponents
+// Modified project: https://github.com/jpdrude/RobotComponents
 //
 // Copyright (c) 2022-2025 Arjen Deetman
+// Copyright (c) 2025 EDEK Uni Kassel
 //
-// Authors:
+// Original Authors:
 //   - Arjen Deetman (2022-2025)
+//
+// Modified by:
+//   - Jan Philipp Drude (2025-2026)
 //
 // For license details, see the LICENSE file in the project root.
 
@@ -38,6 +43,7 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
                 + System.Environment.NewLine + System.Environment.NewLine +
                 "This component uses the ABB PC SDK.")
         {
+            this.Message = "DISARMED";
         }
 
         /// <summary>
@@ -46,13 +52,15 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
         protected override void RegisterInputParams(GH_InputParamManager pManager)
         {
             pManager.AddParameter(new Param_Controller(), "Controller", "C", "Controller as Controller", GH_ParamAccess.item);
+            pManager.AddBooleanParameter("Arm", "A", "Arm the safety interlock as bool. Required before running on a physical controller. Not required for virtual controllers.", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Run", "R", "Run as bool", GH_ParamAccess.item, false);
             pManager.AddBooleanParameter("Stop", "S", "Stop/Pause as bool", GH_ParamAccess.item, false);
-            pManager.AddBooleanParameter("Reset", "R", "Resets the program pointer of all tasks as bool", GH_ParamAccess.item, false);
+            pManager.AddBooleanParameter("Reset", "Re", "Resets the program pointer of all tasks as bool", GH_ParamAccess.item, false);
 
             pManager[1].Optional = true;
             pManager[2].Optional = true;
             pManager[3].Optional = true;
+            pManager[4].Optional = true;
         }
 
         /// <summary>
@@ -77,34 +85,76 @@ namespace RobotComponents.ABB.Gh.Components.ControllerUtility
             }
 
             // Declare input variables
+            bool arm = false;
             bool run = false;
             bool stop = false;
             bool reset = false;
 
             // Catch the input data
             if (!DA.GetData(0, ref _controller)) { return; }
-            if (!DA.GetData(1, ref run)) { run = false; }
-            if (!DA.GetData(2, ref stop)) { stop = false; }
-            if (!DA.GetData(3, ref reset)) { reset = false; }
+            if (!DA.GetData(1, ref arm)) { arm = false; }
+            if (!DA.GetData(2, ref run)) { run = false; }
+            if (!DA.GetData(3, ref stop)) { stop = false; }
+            if (!DA.GetData(4, ref reset)) { reset = false; }
+
+            // Determine controller type and update interlock state.
+            // Empty controllers are treated as disconnected, not virtual.
+            if (_controller.IsEmpty)
+            {
+                this.Message = "-";
+            }
+            else if (_controller.IsVirtual)
+            {
+                this.Message = "VIRTUAL";
+            }
+            else
+            {
+                this.Message = arm ? "ARMED" : "DISARMED";
+            }
+
+            bool isPhysical = !_controller.IsEmpty && !_controller.IsVirtual;
+            bool armed = Controller.IsExecutionPermitted(arm, isPhysical);
 
             if (run)
             {
-                _succeeded = _controller.RunProgram(out _status);
+                if (!armed)
+                {
+                    _succeeded = false;
+                    _status = "Program not started: Arm the interlock before running on a physical controller.";
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _status);
+                }
+                else
+                {
+                    _succeeded = _controller.RunProgram(out _status);
+
+                    if (!_succeeded)
+                    {
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _status);
+                    }
+                }
             }
 
+            // Stop and Reset intentionally bypass the Arm interlock so the
+            // operator can always halt or reset a running program regardless
+            // of the armed state.
             if (stop)
             {
                 _succeeded = _controller.StopProgram(out _status);
+
+                if (!_succeeded)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _status);
+                }
             }
 
             if (reset)
             {
                 _succeeded = _controller.ResetProgramPointers(out _status);
-            }
 
-            if (_succeeded == false)
-            {
-                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _status);
+                if (!_succeeded)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, _status);
+                }
             }
 
             // Output

@@ -1,10 +1,10 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <IsPackable>false</IsPackable>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="RhinoCommon" Version="7.36.23346.16351" ExcludeAssets="none" />
@@ -16,6 +16,19 @@
     <ProjectReference Include="..\RobotComponents\RobotComponents.csproj" />
     <ProjectReference Include="..\RobotComponents.ABB\RobotComponents.ABB.csproj" />
     <ProjectReference Include="..\RobotComponents.ABB.Presets\RobotComponents.ABB.Presets.csproj" />
+    <ProjectReference Include="..\RobotComponents.ABB.Controllers\RobotComponents.ABB.Controllers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ABB.Robotics.Controllers.PC">
+      <HintPath>..\DLLs\ABB.Robotics.Controllers.PC.dll</HintPath>
+    </Reference>
+    <Reference Include="RobotStudio.Services.RobApi">
+      <HintPath>..\DLLs\RobotStudio.Services.RobApi.dll</HintPath>
+    </Reference>
+    <Reference Include="RobotStudio.Services.RobApi.Desktop">
+      <HintPath>..\DLLs\RobotStudio.Services.RobApi.Desktop.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
